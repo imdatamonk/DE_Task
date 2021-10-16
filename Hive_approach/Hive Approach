@@ -1,0 +1,75 @@
+
+#First I uploaded given data in HDFS and Created an External table to in Hive
+
+hive> create external table customer_staging
+    > (vlank_col char(1),H varchar(2),Customer_Name varchar(20),Customer_ID varchar(12),Customer_Open_Date string,Last_Consulted_Date string,Vaccination_Type varchar(5),Doctor_Consulted varchar(20),State varchar(5),Country varchar(7),Date_of_Birth string,Active_customer varchar(3))
+    > row format delimited fields terminated by '|'
+    > location '/user/hive1/warehouse/incubytes.db/customer_staging'                                                  ###Same Point where data is Uploaded in HDFS
+    > tblproperties ("skip.header.line.count"="1");                                                                   ### To ignore Header
+
+
+#letter I craeted another table that will partiton the data into CountryWise
+hive> create table countrywise_data
+    > (customer_Name varchar(20),customer_ID varchar(12),Customer_Open_Date DATE,Last_Consulted_Date DATE,Vaccination_Type varchar(5),Doctor_Consulted varchar(20),State varchar(5),Date_of_Birth DATE,Active_customer varchar(3))
+    > PARTITIONED BY (Country varchar(7))
+    > row format delimited fields terminated by ','
+    > stored as textfile location '/user/datamonk/countrywise_report/';
+OK
+Time taken: 0.14 seconds
+hive> set hive.enforce.bucketing = true;
+hive> set hive.exec.dynamic.partition=true;
+hive> set hive.exec.dynamic.partition.mode=nonstrict;
+hive> set hive.exec.max.dynamic.partitions.pernode=1000;
+hive> set hive.enforce.bucketing = true;
+
+
+#loaded data from stagiging ytyable to partiton
+
+hive> insert overwrite table incubytes.countrywise_data partition(country)
+    > select customer_name,customer_id,from_unixtime(unix_timestaMP(customer_open_date,'yyyyMMdd'), 'yyyy-MM-dd'),from_unixtime(unix_timestaMP(last_consulted_date,'yyyyMMdd'), 'yyyy-MM-dd'),vaccination_type,doctor_consulted,state,from_unixtime(unix_timestaMP(date_of_birth ,'MMddyyyy'), 'yyyy-MM-dd'),active_customer,country
+    > from incubytes.customer_staging;
+
+
+#loading data country wise
+
+hive> create table countrywise_AU_data
+    > (customer_Name varchar(20),customer_ID varchar(12),Customer_Open_Date DATE,Last_Consulted_Date DATE,Vaccination_Type varchar(5),Doctor_Consulted varchar(20),State varchar(5),Date_of_Birth DATE,Active_customer varchar(3))
+    > row format delimited fields terminated by ','
+    > location '/user/datamonk/countrywise_report/country=AU';
+
+
+hive> create table countrywise_IND_data
+    > (customer_Name varchar(20),customer_ID varchar(12),Customer_Open_Date DATE,Last_Consulted_Date DATE,Vaccination_Type varchar(5),Doctor_Consulted varchar(20),State varchar(5),Date_of_Birth DATE,Active_customer varchar(3))
+    > row format delimited fields terminated by ','
+    > location '/user/datamonk/countrywise_report/country=IND';
+OK
+Time taken: 0.103 seconds
+
+
+hive> create table countrywise_NYC_data
+    > (customer_Name varchar(20),customer_ID varchar(12),Customer_Open_Date DATE,Last_Consulted_Date DATE,Vaccination_Type varchar(5),Doctor_Consulted varchar(20),State varchar(5),Date_of_Birth DATE,Active_customer varchar(3))
+    > row format delimited fields terminated by ','
+    > location '/user/datamonk/countrywise_report/country=NYC';
+OK
+Time taken: 0.216 seconds
+
+
+hive> create table countrywise_PHIL_data
+    > (customer_Name varchar(20),customer_ID varchar(12),Customer_Open_Date DATE,Last_Consulted_Date DATE,Vaccination_Type varchar(5),Doctor_Consulted varchar(20),State varchar(5),Date_of_Birth DATE,Active_customer varchar(3))
+    > row format delimited fields terminated by ','
+    > location '/user/datamonk/countrywise_report/country=PHIL';
+OK
+Time taken: 0.093 seconds
+
+
+hive> create table countrywise_US_data
+    > (customer_Name varchar(20),customer_ID varchar(12),Customer_Open_Date DATE,Last_Consulted_Date DATE,Vaccination_Type varchar(5),Doctor_Consulted varchar(20),State varchar(5),Date_of_Birth DATE,Active_customer varchar(3))
+    > row format delimited fields terminated by ','
+    > location '/user/datamonk/countrywise_report/country=US';
+OK
+
+
+
+
+
+
